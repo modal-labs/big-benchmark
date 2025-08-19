@@ -1,0 +1,9 @@
+id: sglang
+files:
+  - deepseek.yaml
+  - deepseek-awq.yaml
+  - gemma3.yaml
+  - llama3.yaml
+  - mistral.yaml
+  - qwen.yaml
+  - zeta.yaml

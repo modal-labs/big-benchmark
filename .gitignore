@@ -1,0 +1,13 @@
+env/
+.venv/
+venv/
+__pycache__/
+stopwatch.egg-info/
+*.json
+*.ipynb
+.DS_Store
+traces/
+*.db
+results/
+*.json.gz
+\.*.yaml

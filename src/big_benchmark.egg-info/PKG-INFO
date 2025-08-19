@@ -1,0 +1,29 @@
+Metadata-Version: 2.4
+Name: big-benchmark
+Version: 0.1.0
+Summary: A tool for running a lot of benchmarks at once on Modal
+Author-email: Jack Cook <hello@jackcook.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/modal-labs/big-benchmark
+Project-URL: Documentation, https://github.com/modal-labs/big-benchmark/blob/main/README.md
+Project-URL: Repository, https://github.com/modal-labs/big-benchmark.git
+Keywords: machine-learning,llms,vllm,sglang,tensorrt-llm
+Requires-Python: <4.0,>=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE.md
+Requires-Dist: modal~=1.1.2
+Requires-Dist: PyYAML~=6.0.2
+Requires-Dist: stopwatch~=0.1.0
+Provides-Extra: tests
+Requires-Dist: datasette~=0.65.1; extra == "tests"
+Requires-Dist: fastapi[standard]~=0.116.1; extra == "tests"
+Requires-Dist: grpclib==0.4.8; extra == "tests"
+Requires-Dist: numpy~=2.3.2; extra == "tests"
+Requires-Dist: pandas~=2.3.1; extra == "tests"
+Requires-Dist: pytest~=8.4.1; extra == "tests"
+Requires-Dist: pytest-xdist~=3.8.0; extra == "tests"
+Requires-Dist: requests~=2.32.4; extra == "tests"
+Requires-Dist: SQLAlchemy~=2.0.43; extra == "tests"
+Dynamic: license-file
+
+# big-benchmark

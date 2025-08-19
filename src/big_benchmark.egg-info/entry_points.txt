@@ -1,0 +1,2 @@
+[console_scripts]
+bb = big_benchmark.cli:app
