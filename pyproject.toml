@@ -7,7 +7,7 @@ name = "big-benchmark"
 version = "0.1.0"
 requires-python = ">=3.10,<4.0"
 dependencies = [
-  "modal~=1.1.2",
+  "modal~=1.1.3",
   "PyYAML~=6.0.2",
   "stopwatch @ git+https://github.com/modal-labs/stopwatch.git",
 ]

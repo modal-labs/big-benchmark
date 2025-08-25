@@ -3,9 +3,8 @@ from collections.abc import Callable
 from pathlib import Path
 
 import modal
-from stopwatch.resources import db_volume
 
-from .resources import web_app
+from big_benchmark.resources import app, db_volume
 
 DB_PATH = "/db"
 
@@ -17,14 +16,13 @@ datasette_image = (
     .run_commands(
         "datasette install git+https://github.com/jackcook/stopwatch-plot.git@ff5b060",
     )
-    .add_local_file("src/stopwatch/resources.py", "/root/stopwatch/resources.py")
 )
 
 with datasette_image.imports():
     from datasette.app import Datasette
 
 
-@web_app.cls(
+@app.cls(
     image=datasette_image,
     volumes={DB_PATH: db_volume},
 )

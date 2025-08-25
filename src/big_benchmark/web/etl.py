@@ -11,9 +11,8 @@ import logging
 from pathlib import Path
 
 import modal
-from stopwatch.resources import db_volume, results_volume
 
-from .resources import web_app
+from big_benchmark.resources import app, db_volume, results_volume
 
 DB_PATH = "/db"
 RESULTS_PATH = "/results"
@@ -21,16 +20,11 @@ RESULTS_PATH = "/results"
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-etl_image = (
-    modal.Image.debian_slim(python_version="3.13")
-    .uv_pip_install(
-        "fastapi[standard]",
-        "numpy",
-        "pandas",
-        "SQLAlchemy",
-    )
-    .add_local_file("src/stopwatch/resources.py", "/root/stopwatch/resources.py")
-    .add_local_dir("src/stopwatch/db", "/root/stopwatch/db")
+etl_image = modal.Image.debian_slim(python_version="3.13").uv_pip_install(
+    "fastapi[standard]",
+    "numpy",
+    "pandas",
+    "SQLAlchemy",
 )
 
 with etl_image.imports():
@@ -39,7 +33,7 @@ with etl_image.imports():
     from .transforms import transform
 
 
-@web_app.function(volumes={RESULTS_PATH: results_volume}, image=etl_image)
+@app.function(volumes={RESULTS_PATH: results_volume}, image=etl_image)
 def merge_jsonls(jsonl_path: str, json_list: list[dict]) -> list[dict]:
     """
     Merge JSONL files from the results with an input list of JSON objects.
@@ -53,7 +47,7 @@ def merge_jsonls(jsonl_path: str, json_list: list[dict]) -> list[dict]:
     return results + json_list
 
 
-@web_app.local_entrypoint()
+@app.local_entrypoint()
 def main(
     remote_jsonl_path: str,
     local_jsonl_path: str | None = None,
@@ -134,7 +128,7 @@ def read_jsonl(file_path: str | Path) -> list[dict]:
     return list(map(json.loads, Path(file_path).read_text().splitlines()))
 
 
-@web_app.function(
+@app.function(
     image=etl_image,
     volumes={DB_PATH: db_volume, RESULTS_PATH: results_volume},
     max_inputs=1,

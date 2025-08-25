@@ -7,7 +7,7 @@ from stopwatch.benchmark import GuideLLM
 from stopwatch.constants import DB_PATH, GUIDELLM_VERSION, HOURS, LLMServerType
 from stopwatch.resources import app, db_volume, results_volume
 
-from web.etl import export_results
+from .web import export_results
 
 DATASETTE_PATH = "/datasette"
 MAX_CONCURRENT_BENCHMARKS = 45
@@ -20,15 +20,11 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-benchmark_suite_image = (
-    modal.Image.debian_slim(python_version="3.13")
-    .uv_pip_install(
-        "fastapi[standard]",
-        "numpy",
-        "pandas",
-        "SQLAlchemy",
-    )
-    .add_local_python_source("stopwatch", "web")
+benchmark_suite_image = modal.Image.debian_slim(python_version="3.13").uv_pip_install(
+    "fastapi[standard]",
+    "numpy",
+    "pandas",
+    "SQLAlchemy",
 )
 
 with benchmark_suite_image.imports():
