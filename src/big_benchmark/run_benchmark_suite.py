@@ -20,11 +20,16 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-benchmark_suite_image = modal.Image.debian_slim(python_version="3.13").uv_pip_install(
-    "fastapi[standard]",
-    "numpy",
-    "pandas",
-    "SQLAlchemy",
+benchmark_suite_image = (
+    modal.Image.debian_slim(python_version="3.13")
+    .apt_install("git")
+    .uv_pip_install(
+        "fastapi[standard]",
+        "numpy",
+        "pandas",
+        "SQLAlchemy",
+        "git+https://github.com/modal-labs/stopwatch.git#85be1a6",
+    )
 )
 
 with benchmark_suite_image.imports():
@@ -315,21 +320,22 @@ async def run_benchmarks(
             raise Exception(msg)
 
         if fc is None:
-            config = {
-                **benchmark_records[0].get_config(),
+            benchmark_config = benchmark_records[0].get_config()
+            run_benchmark_kwargs = {
+                "endpoint": f"{server_url}/v1",
+                "model": benchmark_config["model"],
                 "rate_type": rate_types,
+                "data": benchmark_config["data"],
+                "caller_id": uuid.uuid4().hex,
+                "client_config": benchmark_config["client_config"],
                 "rate": rates,
             }
 
-            logger.info("Starting benchmarks with config %s", config)
+            logger.info("Starting benchmarks with kwargs %s", run_benchmark_kwargs)
 
             # Run the benchmark
             guidellm = GuideLLM.with_options(region=benchmark_records[0].client_region)
-            fc = guidellm().run_benchmark.spawn(
-                endpoint=f"{server_url}/v1",
-                caller_id=uuid.uuid4().hex,
-                **config,
-            )
+            fc = guidellm().run_benchmark.spawn(**run_benchmark_kwargs)
 
             for benchmark_record in benchmark_records:
                 benchmark_record.function_call_id = fc.object_id
@@ -373,7 +379,7 @@ async def run_benchmarks(
                     for r in fc_result
                     if r["rate_type"] == benchmark_record.rate_type
                     and r["rate"] == benchmark_record.rate
-                )["results"],
+                ),
             )
 
         session.commit()
