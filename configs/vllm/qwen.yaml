@@ -17,18 +17,11 @@ configs:
     gpu: H100!:8
     llm_server_config:
       - extra_args:
-          [
-            "--tensor-parallel-size",
-            "8",
-            "--enable-reasoning",
-            "--reasoning-parser",
-            "deepseek_r1",
-          ]
+          ["--tensor-parallel-size", "8", "--reasoning-parser", "deepseek_r1"]
       - extra_args:
           [
             "--tensor-parallel-size",
             "8",
-            "--enable-reasoning",
             "--reasoning-parser",
             "deepseek_r1",
             "--quantization",

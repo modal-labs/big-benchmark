@@ -1,6 +1,6 @@
 id: tensorrt-llm-deepseek
 base_config:
-  model: deepseek-ai/DeepSeek-V3-0324
+  model: deepseek-ai/DeepSeek-V3.1
   data:
     - prompt_tokens=128,output_tokens=1024
     # - prompt_tokens=1024,output_tokens=128

@@ -33,8 +33,7 @@ SIZE_PATTERN = re.compile(
 # In cases where we can't infer the size from the model repo,
 # we hard-code a value.
 REPO_TO_SIZE = {
-    "cognitivecomputations/DeepSeek-V3-0324-AWQ": "671B-A37B",
-    "deepseek-ai/DeepSeek-V3-0324": "671B-A37B",
+    "deepseek-ai/DeepSeek-V3.1": "671B-A37B",
     "zed-industries/zeta": "7B",
 }
 
@@ -94,9 +93,7 @@ def transform(df):  # noqa: ANN001, ANN201
     df["gpu_count"] = df["gpu"].map(lambda x: int(x.split(":")[1]) if ":" in x else 1)
 
     # TODO(charles): Hack to remove extra results
-    df = df[
-        ~((df["gpu"] == "H200:8") & (df["model"] == "deepseek-ai/DeepSeek-V3-0324"))
-    ]
+    df = df[~((df["gpu"] == "H200:8") & (df["model"] == "deepseek-ai/DeepSeek-V3.1"))]
 
     # Extract model properties from repo
     df["model_repo"] = df["model"]
@@ -294,8 +291,6 @@ def get_model_quant(row) -> str | None:  # noqa: ANN001, PLR0911
             return f"int{matches[-1]}"  # digit
 
     if "deepseek" in model_name:
-        if "awq" in model_name:
-            return "int4"
         return "fp8"
 
     if dtype:

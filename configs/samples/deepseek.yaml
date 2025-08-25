@@ -1,6 +1,6 @@
 id: deepseek
 base_config:
-  model: deepseek-ai/DeepSeek-V3-0324
+  model: deepseek-ai/DeepSeek-V3.1
   data: prompt_tokens=1024,output_tokens=128
   llm_server_type: vllm
   llm_server_config:
