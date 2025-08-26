@@ -26,7 +26,7 @@ benchmark_suite_image = (
         "fastapi[standard]",
         "pandas",
         "SQLAlchemy",
-        "git+https://github.com/modal-labs/stopwatch.git#e6bd530",
+        "git+https://github.com/modal-labs/stopwatch.git#0e96f2e",
     )
 )
 
@@ -88,7 +88,6 @@ async def run_benchmark(
             "model": config["model"],
             "rate_type": RateType.sweep.value,
             "data": config["data"],
-            "caller_id": uuid.uuid4().hex,
             "client_config": config["client_config"],
         }
 
