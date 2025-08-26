@@ -16,7 +16,7 @@ from big_benchmark.run_benchmark_suite import run_benchmark_suite
 def build_all_benchmark_configs(
     config_path: Path,
     exclude_instance_types: str | None = None,
-) -> tuple[list[dict[str, Any]], str, int, int]:
+) -> tuple[list[dict[str, Any]], str]:
     """
     Build benchmark configurations by computing the outer product of all listed
     configurations in the YAML config file.
@@ -25,8 +25,7 @@ def build_all_benchmark_configs(
         configurations.
     :param: exclude_instance_types: A comma-separated list of instance types to exclude
         from the benchmark suite. Asterisks are supported, e.g. "H100:*" or "*:8".
-    :return: A tuple containing all specified benchmark configurations, the suite ID,
-        the suite version, and the number of times the suite should be repeated.
+    :return: A tuple containing all specified benchmark configurations and the suite ID.
     """
 
     with config_path.open() as f:
@@ -64,18 +63,13 @@ def build_all_benchmark_configs(
             benchmark_configs.append(benchmark_config)
 
     for file in config.get("files", []):
-        file_benchmark_configs, _, _, _ = build_all_benchmark_configs(
+        file_benchmark_configs, _ = build_all_benchmark_configs(
             config_path.parent / file,
             exclude_instance_types,
         )
         benchmark_configs.extend(file_benchmark_configs)
 
-    return (
-        benchmark_configs,
-        config["id"],
-        config.get("version", 1),
-        config.get("repeats", 1),
-    )
+    return benchmark_configs, config["id"]
 
 
 def run_benchmark_suite_cli(
@@ -83,21 +77,18 @@ def run_benchmark_suite_cli(
     *,
     detach: bool = False,
     exclude_instance_types: str | None = None,
-    fast_mode: bool = False,
 ) -> None:
     """
     Run a benchmark suite.
 
     :param: config_path: The path to the YAML file containing the benchmark
         configurations.
+    :param: detach: Whether to detach from the Modal app.
     :param: exclude_instance_types: A comma-separated list of instance types to exclude
         from the benchmark suite. Asterisks are supported, e.g. "H100:*" or "*:8".
-    :param: fast_mode: Whether to run the benchmark suite in fast mode, which will run
-        more benchmarks in parallel, incurring extra costs since LLM servers are not
-        reused between benchmarks. Disabled by default.
     """
 
-    benchmark_configs, suite_id, version, repeats = build_all_benchmark_configs(
+    benchmark_configs, suite_id = build_all_benchmark_configs(
         Path(config_path),
         exclude_instance_types,
     )
@@ -106,33 +97,23 @@ def run_benchmark_suite_cli(
         print("No benchmarks to run")
         return
 
-    benchmark_names = [
-        [uuid.uuid4().hex[:8] for _ in range(repeats)]
-        for _ in range(len(benchmark_configs))
-    ]
-
     with db_volume.batch_upload(force=True) as batch:
         benchmark_servers = [
-            [
-                create_dynamic_llm_server_cls(
-                    benchmark_names[i][j],
-                    benchmark_config["model"],
-                    gpu=benchmark_config["gpu"],
-                    llm_server_type=LLMServerType(benchmark_config["llm_server_type"]),
-                    region=benchmark_config.get("server_region"),
-                    llm_server_config=benchmark_config.get("llm_server_config", {}),
-                    batch=batch,
-                    parametrized_fn=True,
-                )
-                for j in range(repeats)
-            ]
-            for i, benchmark_config in enumerate(benchmark_configs)
+            create_dynamic_llm_server_cls(
+                uuid.uuid4().hex[:8],
+                benchmark_config["model"],
+                gpu=benchmark_config["gpu"],
+                llm_server_type=LLMServerType(benchmark_config["llm_server_type"]),
+                region=benchmark_config.get("server_region"),
+                llm_server_config=benchmark_config.get("llm_server_config", {}),
+                batch=batch,
+            )
+            for benchmark_config in benchmark_configs
         ]
 
     with modal.enable_output(), app.run(detach=detach):
         benchmark_server_urls = [
-            [server_cls().start.get_web_url() for server_cls in server_classes]
-            for server_classes in benchmark_servers
+            server_class().start.get_web_url() for server_class in benchmark_servers
         ]
 
         run_benchmark_suite.remote(
@@ -144,9 +125,6 @@ def run_benchmark_suite_cli(
                 ),
             ),
             suite_id=suite_id,
-            version=version,
-            repeats=repeats,
-            fast_mode=fast_mode,
         )
 
         print()

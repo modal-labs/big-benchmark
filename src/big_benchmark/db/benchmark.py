@@ -7,42 +7,6 @@ from sqlalchemy.sql import func
 from .base import Base
 
 
-def histogram_median(bins: list[float], counts: list[int]) -> float | None:
-    """
-    Estimate the median of a distribution from histogram data.
-
-    :param: bins: The bins of the histogram.
-    :param: counts: The counts in each bin.
-    :return: The estimated median of the distribution.
-    """
-
-    if len(bins) == len(counts) == 0:
-        return None
-
-    if len(bins) != len(counts) + 1:
-        msg = f"len({bins}) != len({counts}) + 1"
-        raise ValueError(msg)
-
-    total = sum(counts)
-    half = total / 2
-
-    # Walk through the histogram until we reach or exceed the halfway point
-    cumulative = 0
-    for i, count in enumerate(counts):
-        new_cumulative = cumulative + count
-
-        if new_cumulative >= total / 2:
-            # Linearly interpolate within the bin
-            fraction = (half - cumulative) / count if count > 0 else 0
-            bin_width = bins[i + 1] - bins[i]
-            return bins[i] + fraction * bin_width
-
-        cumulative = new_cumulative
-
-    msg = "No median found"
-    raise ValueError(msg)
-
-
 def benchmark_class_factory(table_name: str = "benchmarks") -> type:
     """
     Create a benchmark class that can be used by SQLAlchemy to store benchmark results.
@@ -51,16 +15,13 @@ def benchmark_class_factory(table_name: str = "benchmarks") -> type:
     :return: A benchmark class.
     """
 
-    import numpy as np
-
     class Benchmark(Base):
         __tablename__ = table_name
 
         # Metadata
         id = Column(Integer, primary_key=True)
         created_at = Column(DateTime, default=func.now())
-        function_call_id = Column(String)
-        repeat_index = Column(Integer, nullable=False, default=0)
+        function_call_id = Column(String, nullable=False)
         group_id = Column(String, nullable=False)
 
         # Parameters
@@ -72,8 +33,8 @@ def benchmark_class_factory(table_name: str = "benchmarks") -> type:
         rate = Column(Float)
         data = Column(String, nullable=False)
         gpu = Column(String, nullable=False)
-        server_region = Column(String, nullable=False)
-        client_region = Column(String, nullable=False)
+        server_region = Column(String)
+        client_region = Column(String)
         version_metadata = Column(JSON)
 
         # Data
@@ -81,10 +42,6 @@ def benchmark_class_factory(table_name: str = "benchmarks") -> type:
         output_tokens_variance = Column(Integer)
         prompt_tokens = Column(Integer)
         prompt_tokens_variance = Column(Integer)
-
-        # vLLM metrics
-        tpot_median = Column(Float)
-        kv_cache_usage_mean = Column(Float)
 
         # Results
         start_time = Column(Float)
@@ -189,16 +146,6 @@ def benchmark_class_factory(table_name: str = "benchmarks") -> type:
                     value /= 1000
 
                 setattr(self, f"{db_key}_{db_statistic_key}", value)
-
-            # Save vLLM metrics
-            if vllm_metrics := results["extras"].get("vllm_metrics", None):
-                self.kv_cache_usage_mean = 100 * np.mean(
-                    [metrics["kv_cache_usage"] for metrics in vllm_metrics],
-                )
-                self.tpot_median = histogram_median(
-                    vllm_metrics[-1]["time_per_output_token"]["bins"],
-                    vllm_metrics[-1]["time_per_output_token"]["data"],
-                )
 
     return Benchmark
 

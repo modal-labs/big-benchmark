@@ -22,7 +22,6 @@ logging.basicConfig(level=logging.INFO)
 
 etl_image = modal.Image.debian_slim(python_version="3.13").uv_pip_install(
     "fastapi[standard]",
-    "numpy",
     "pandas",
     "SQLAlchemy",
 )
@@ -158,7 +157,7 @@ def export_results(suite_ids: str, *, verbose: bool = False):  # noqa: ANN201
     # Convert suite_ids to a list of benchmark classes
     if isinstance(suite_ids[0], str):
         suite_ids = [
-            benchmark_class_factory(table_name=suite_id.replace("-", "_") + "_averaged")
+            benchmark_class_factory(table_name=suite_id.replace("-", "_"))
             for suite_id in suite_ids
         ]
 
@@ -166,7 +165,7 @@ def export_results(suite_ids: str, *, verbose: bool = False):  # noqa: ANN201
     full_buf = io.BytesIO()
 
     for suite_cls in suite_ids:
-        suite_id = suite_cls.__tablename__.rsplit("_averaged")[0].replace("_", "-")
+        suite_id = suite_cls.__tablename__.replace("_", "-")
         results = session.query(suite_cls).all()
 
         if verbose:

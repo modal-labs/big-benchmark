@@ -2,7 +2,7 @@ env/
 .venv/
 venv/
 __pycache__/
-stopwatch.egg-info/
+*.egg-info/
 *.json
 *.ipynb
 .DS_Store
