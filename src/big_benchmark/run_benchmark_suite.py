@@ -26,7 +26,7 @@ benchmark_suite_image = (
         "fastapi[standard]",
         "pandas",
         "SQLAlchemy",
-        "git+https://github.com/modal-labs/stopwatch.git#0e96f2e",
+        "git+https://github.com/modal-labs/stopwatch.git#0e2a665",
     )
 )
 
@@ -70,6 +70,7 @@ def find_function_call(
 async def run_benchmark(
     config: dict[str, Any],
     server_url: str,
+    server_id: str,
     semaphore: asyncio.Semaphore,
 ) -> None:
     """
@@ -78,6 +79,7 @@ async def run_benchmark(
 
     :param: config: The benchmark configuration.
     :param: server_url: The URL of the LLM server to use.
+    :param: server_id: The ID of the LLM server to use.
     :param: semaphore: A semaphore to limit the number of benchmarks that can run
         concurrently.
     """
@@ -89,6 +91,7 @@ async def run_benchmark(
             "rate_type": RateType.sweep.value,
             "data": config["data"],
             "client_config": config["client_config"],
+            "server_id": server_id,
         }
 
         logger.info("Starting benchmarks with kwargs %s", run_benchmark_kwargs)
@@ -139,7 +142,7 @@ async def run_benchmark(
 
 
 async def run_benchmarks_in_parallel(
-    benchmark_configs: list[tuple[dict[str, Any], str]],
+    benchmark_configs: list[tuple[dict[str, Any], str, str]],
 ) -> None:
     """
     Given a list of benchmark configurations, identify which benchmarks need to be run,
@@ -151,7 +154,7 @@ async def run_benchmarks_in_parallel(
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_BENCHMARKS)
     tasks = []
 
-    for config, server_url in benchmark_configs:
+    for config, server_url, server_id in benchmark_configs:
         successful_benchmark_count = (
             session.query(Benchmark)
             .filter_by(
@@ -165,7 +168,7 @@ async def run_benchmarks_in_parallel(
             continue
 
         task = asyncio.create_task(
-            run_benchmark(config, server_url, semaphore),
+            run_benchmark(config, server_url, server_id, semaphore),
         )
         tasks.append(task)
 
@@ -192,15 +195,15 @@ async def run_benchmarks_in_parallel(
 )
 @modal.concurrent(max_inputs=1)
 async def run_benchmark_suite(
-    benchmarks: list[tuple[dict[str, Any], str]],
+    benchmarks: list[tuple[dict[str, Any], str, str]],
     suite_id: str,
 ) -> None:
     """
     Run a suite of benchmarks.
 
     :param: benchmarks: A list of benchmarks to run. Each item in this list is a tuple
-        with three items: the benchmark configuration, the name of the client class to
-        use, and the name of the LLM server class to use.
+        with three items: the benchmark configuration, the URL of the LLM server to
+        use, and the ID of the LLM server to use.
     :param: suite_id: The ID of the benchmark suite.
     """
 
@@ -217,7 +220,7 @@ async def run_benchmark_suite(
     # Validate benchmarks
     logger.info("Validating benchmarks...")
 
-    for benchmark_config, _ in benchmarks:
+    for benchmark_config, _, _ in benchmarks:
         for key in ["llm_server_type", "model", "data", "gpu"]:
             if benchmark_config.get(key) is None:
                 msg = f"Benchmark {benchmark_config} has no {key}"

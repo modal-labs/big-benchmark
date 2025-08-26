@@ -7,7 +7,7 @@ from typing import Any
 import modal
 import yaml
 from stopwatch.constants import LLMServerType
-from stopwatch.llm_servers import create_dynamic_llm_server_cls
+from stopwatch.llm_servers import create_dynamic_llm_server_class
 from stopwatch.resources import app, db_volume
 
 from big_benchmark.run_benchmark_suite import run_benchmark_suite
@@ -98,8 +98,8 @@ def run_benchmark_suite_cli(
         return
 
     with db_volume.batch_upload(force=True) as batch:
-        benchmark_servers = [
-            create_dynamic_llm_server_cls(
+        benchmark_server_classes = [
+            create_dynamic_llm_server_class(
                 uuid.uuid4().hex[:8],
                 benchmark_config["model"],
                 gpu=benchmark_config["gpu"],
@@ -113,14 +113,17 @@ def run_benchmark_suite_cli(
 
     with modal.enable_output(), app.run(detach=detach):
         benchmark_server_urls = [
-            server_class().start.get_web_url() for server_class in benchmark_servers
+            server_class().start.get_web_url()
+            for server_class, _ in benchmark_server_classes
         ]
+        benchmark_server_ids = [server_id for _, server_id in benchmark_server_classes]
 
         run_benchmark_suite.remote(
             benchmarks=list(
                 zip(
                     benchmark_configs,
                     benchmark_server_urls,
+                    benchmark_server_ids,
                     strict=True,
                 ),
             ),
