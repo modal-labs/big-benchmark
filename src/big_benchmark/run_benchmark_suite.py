@@ -26,7 +26,7 @@ benchmark_suite_image = (
         "fastapi[standard]",
         "pandas",
         "SQLAlchemy",
-        "git+https://github.com/modal-labs/stopwatch.git#0e2a665",
+        "git+https://github.com/modal-labs/stopwatch.git#665104a",
     )
 )
 
@@ -255,22 +255,25 @@ async def run_benchmark_suite(
     SuiteBenchmark.__table__.drop(engine, checkfirst=True)
     SuiteBenchmark.__table__.create(engine)
 
-    benchmark_records = (
-        session.query(Benchmark)
-        .filter_by(**{k: v for k, v in benchmark_config.items() if k != "group_id"})
-        .all()
-    )
-
     non_pk_columns = [
         k
         for k in Benchmark.__table__.columns.keys()  # noqa: SIM118
         if k not in Benchmark.__table__.primary_key.columns.keys()  # noqa: SIM118
     ]
 
-    for benchmark_record in benchmark_records:
-        session.add(
-            SuiteBenchmark(**{c: getattr(benchmark_record, c) for c in non_pk_columns}),
+    for config, _, _ in benchmarks:
+        benchmark_records = (
+            session.query(Benchmark)
+            .filter_by(**{k: v for k, v in config.items() if k != "group_id"})
+            .all()
         )
+
+        for benchmark_record in benchmark_records:
+            session.add(
+                SuiteBenchmark(
+                    **{c: getattr(benchmark_record, c) for c in non_pk_columns},
+                ),
+            )
 
     session.commit()
     db_volume.commit()

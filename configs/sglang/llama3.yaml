@@ -1,6 +1,7 @@
 id: sglang-llama3
 base_config:
-  region: us-chicago-1
+  server_region: us-chicago-1
+  client_region: us-east-1
   llm_server_type: sglang
   data:
     - prompt_tokens=128,output_tokens=1024

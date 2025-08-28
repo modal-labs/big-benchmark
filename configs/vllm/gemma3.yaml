@@ -1,6 +1,7 @@
 id: vllm-gemma3
 base_config:
-  region: us-chicago-1
+  client_region: us-east-1
+  server_region: us-chicago-1
   llm_server_type: vllm
   llm_server_config:
     extra_args: ["--dtype", "bfloat16", "--max-model-len", "65536"]
