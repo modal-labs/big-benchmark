@@ -26,7 +26,7 @@ benchmark_suite_image = (
         "fastapi[standard]",
         "pandas",
         "SQLAlchemy",
-        "git+https://github.com/modal-labs/stopwatch.git#1e1e2c4",
+        "git+https://github.com/modal-labs/stopwatch.git#a38f9ec",
     )
 )
 

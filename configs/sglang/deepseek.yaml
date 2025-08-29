@@ -13,7 +13,7 @@ base_config:
     - prompt_tokens=2048,output_tokens=2048
   llm_server_type: sglang
   llm_server_config:
-    extra_args: ["--tp", "8", "--context-length", "16384"]
+    extra_args: ["--tp", "8"]
 configs:
   - gpu: H200:8
     region: us-east-1
@@ -21,5 +21,5 @@ configs:
     server_region: us-ashburn-1
     client_region: us-east-1
     llm_server_config:
-      extra_args: ["--tp", "8", "--context-length", "16384"]
-      version: v0.4.10.post2-cu128-b200
+      extra_args: ["--tp", "8"]
+      version: v0.5.1.post3-cu128-b200
