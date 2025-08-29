@@ -2,6 +2,7 @@ id: sglang
 files:
   - deepseek.yaml
   - gemma3.yaml
+  - gpt-oss.yaml
   - llama3.yaml
   - mistral.yaml
   - qwen.yaml

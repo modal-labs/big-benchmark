@@ -1,6 +1,7 @@
 id: tensorrt-llm
 files:
   - deepseek.yaml
+  - gpt-oss.yaml
   - llama3.yaml
   - mistral.yaml
   - zeta.yaml
